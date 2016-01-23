@@ -1,2 +1,5 @@
 *.sdf
 *.suo
+*.opensdf
+x64/
+*.user
