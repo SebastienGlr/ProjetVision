@@ -6,54 +6,49 @@
 
 #include <iostream>
 #include <iomanip>
-#include <thread>
-#include <chrono>
 
 #define FOLDER_LEFT "img/2011_09_26/2011_09_26_drive_0014_sync/image_02/data/" //Chemin relatif par rapport au fichier
 #define FOLDER_RIGHT "img/2011_09_26/2011_09_26_drive_0014_sync/image_03/data/" //Chemin relatif par rapport au fichier
-#define NB_FRAME 314
+#define NB_FRAME 313
 
 cv::Mat computeDisparity(cv::Mat &rectifiedL, cv::Mat &rectifiedR)
 {
-	cv::Ptr<cv::StereoBM> SBM = cv::StereoBM::create();
-	SBM->setBlockSize(21);
-	SBM->setNumDisparities(112);
-	SBM->setPreFilterSize(5);
-	SBM->setPreFilterCap(1);
-	SBM->setMinDisparity(0);
-	SBM->setTextureThreshold(5);
-	SBM->setUniquenessRatio(5);
-	SBM->setSpeckleWindowSize(0);
-	SBM->setSpeckleRange(20);
-	SBM->setDisp12MaxDiff(64);
-
-	cv::Mat disparity, out;
+	double min, max;
+	cv::Mat disparity = cv::Mat(rectifiedL.rows, rectifiedL.cols, CV_16S)
+		, out = cv::Mat(rectifiedL.rows, rectifiedL.cols, CV_8UC1);
+	cv::Ptr<cv::StereoBM> SBM = cv::StereoBM::create(0, 21);
 
 	SBM->compute(rectifiedL, rectifiedR, disparity);
-	cv::normalize(disparity, out, 0.1, 255, CV_MINMAX, CV_8U);
+	cv::minMaxLoc(disparity, &min, &max);
+	disparity.convertTo(out, CV_8UC1, 255 / (max - min));
 
 	return out;
 }
 
-int main(void)
+void callBackTrackBar(int pos, void* userdata)
 {
 	cv::Mat left, right, disparity;
 	std::ostringstream oss;
 
 	oss << std::setfill('0');
-	cv::namedWindow("Disparity", cv::WINDOW_AUTOSIZE);
-	for (int i = 0; i < NB_FRAME; ++i)
-	{
-		oss.str("");
-		oss << FOLDER_LEFT << std::setw(10) << i << ".png";
-		left = cv::imread(oss.str(), 0);
-		oss.str("");
-		oss << FOLDER_RIGHT << std::setw(10) << i << ".png";
-		right = cv::imread(oss.str(), 0);
+	oss.str("");
+	oss << FOLDER_LEFT << std::setw(10) << pos << ".png";
+	left = cv::imread(oss.str(), 0);
+	oss.str("");
+	oss << FOLDER_RIGHT << std::setw(10) << pos << ".png";
+	right = cv::imread(oss.str(), 0);
 
-		disparity = computeDisparity(left, right);
-		cv::imshow("Disparity", disparity);
-		cv::waitKey(25);
-	}
+	disparity = computeDisparity(left, right);
+	cv::imshow("Window", disparity);
+	cv::waitKey(1);
+}
+
+int main(void)
+{
+	cv::namedWindow("Window", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	cv::createTrackbar("Frame", "Window", NULL, NB_FRAME, callBackTrackBar);
+
+	cv::waitKey();
+
 	return 0;
 }
