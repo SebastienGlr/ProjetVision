@@ -1,5 +1,6 @@
 *.sdf
 *.suo
 *.opensdf
-x64/
 *.user
+*.idb
+x64/Debug/
