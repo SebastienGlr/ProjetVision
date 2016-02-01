@@ -20,42 +20,6 @@ std::string getImagePath(const char* folder, int ind)
 	return oss.str();
 }
 
-void computeObjectMouvement()
-{
-	cv::Mat image_next, image_prev;
-	std::vector<cv::Point> features_next, features_prev;
-	std::vector<uchar> status;
-	std::vector<float> err;
-	
-	image_next = cv::imread(getImagePath(FOLDER_LEFT, 0), 0); //First picture
-
-	cv::goodFeaturesToTrack(image_next, features_next, 50, 0.01, 10);
-
-	for (int i = 1; i < NB_FRAME+1; i++)
-	{
-		image_prev = image_next.clone();
-		features_prev = features_next;
-		image_next = cv::imread(getImagePath(FOLDER_LEFT, i), 0);  // Get next image
-
-		// Find position of feature in new image
-		cv::calcOpticalFlowPyrLK(
-			image_prev, image_next, // 2 consecutive images
-			features_prev, // input point positions in first im
-			features_next, // output point positions in the 2nd
-			status,    // tracking success
-			err      // tracking error
-			);
-		for (int i = 0; i < features_next.size(); i++)
-		{
-			cv::circle(copy, features_next[i], r, cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255),
-				rng.uniform(0, 255)), -1, 8, 0);
-		}
-
-		// Show what you got
-		imshow(source_window, copy);
-	}
-}
-
 cv::Mat computeDisparity(cv::Mat &rectifiedL, cv::Mat &rectifiedR)
 {
 	double min, max;
@@ -70,7 +34,46 @@ cv::Mat computeDisparity(cv::Mat &rectifiedL, cv::Mat &rectifiedR)
 	return out;
 }
 
-void callBackTrackBarDisparity(int pos, void* userdata)
+cv::Mat computeObjectMouvement(int frame)
+{
+	const int MAX_FEATURE = 500;
+	cv::Mat image_next, image_prev, output;
+	std::vector<cv::Point2f> features_next, features_prev;
+	std::vector<uchar> status;
+	std::vector<float> err;
+	cv::TermCriteria termcrit(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 20, 0.03);
+	
+	output = cv::imread(getImagePath(FOLDER_LEFT, frame)); // Output frame for drawing
+	image_prev = cv::imread(getImagePath(FOLDER_LEFT, frame - 1), 0); // Get previous image
+	image_next = cv::imread(getImagePath(FOLDER_LEFT, frame), 0);  // Get next image
+
+	cv::goodFeaturesToTrack(image_prev, features_prev, MAX_FEATURE, 0.01, 10);
+	cv::cornerSubPix(image_prev, features_prev, cv::Size(10, 10), cv::Size(-1, -1), termcrit);
+
+	features_next = features_prev;
+	// Find position of feature in new image
+	cv::calcOpticalFlowPyrLK(
+		image_prev, image_next, // 2 consecutive images
+		features_prev, // input point positions in first im
+		features_next, // output point positions in the 2nd
+		status,    // tracking success
+		err,      // tracking error
+		cv::Size(31,31),
+		3,
+		termcrit,
+		0,
+		0.001);
+	for (int i = 0; i < features_next.size(); ++i)
+	{
+		if (status[i])
+		{
+			cv::line(output, features_prev[i], features_next[i], cv::Scalar(255.0, 0.0, 0.0), 2);
+		}
+	}
+	return output;
+}
+
+void callBackTrackBarDisparity(int pos, void*)
 {
 	cv::Mat left, right, disparity;
 
@@ -82,13 +85,23 @@ void callBackTrackBarDisparity(int pos, void* userdata)
 	cv::waitKey(1);
 }
 
+void callBackTrackBarOpticalFlow(int pos, void*)
+{
+	cv::Mat opticalFlow;
+	if (pos > 0)
+	{
+		opticalFlow = computeObjectMouvement(pos);
+		cv::imshow("Optical Flow", opticalFlow);
+	}
+}
+
 int main(void)
 {
 	cv::namedWindow("Window", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
 	cv::createTrackbar("Frame", "Window", NULL, NB_FRAME, callBackTrackBarDisparity);
 
-	cv::namedWindow("Optical Flow", CV_WINDOW_AUTOSIZE);
-	computeObjectMouvement();
+	cv::namedWindow("Optical Flow", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	cv::createTrackbar("Frame", "Optical Flow", NULL, NB_FRAME, callBackTrackBarOpticalFlow);
 
 	cv::waitKey();
 
