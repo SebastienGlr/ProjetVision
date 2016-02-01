@@ -67,7 +67,7 @@ cv::Mat computeObjectMouvement(int frame)
 	{
 		if (status[i])
 		{
-			cv::line(output, features_prev[i], features_next[i], cv::Scalar(255.0, 0.0, 0.0), 2);
+			cv::arrowedLine(output, features_prev[i], features_next[i], cv::Scalar(255.0, 0.0, 0.0), 2);
 		}
 	}
 	return output;
