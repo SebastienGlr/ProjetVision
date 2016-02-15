@@ -26,10 +26,10 @@
 /* #undef HAVE_CARBON */
 
 /* AMD's Basic Linear Algebra Subprograms Library*/
-#define HAVE_CLAMDBLAS
+/* #undef HAVE_CLAMDBLAS */
 
 /* AMD's OpenCL Fast Fourier Transform Library*/
-#define HAVE_CLAMDFFT
+/* #undef HAVE_CLAMDFFT */
 
 /* Clp support */
 /* #undef HAVE_CLP */
@@ -56,26 +56,26 @@
 /* #undef HAVE_DC1394_2 */
 
 /* DirectX */
-#define HAVE_DIRECTX
-#define HAVE_DIRECTX_NV12
-#define HAVE_D3D11
-#define HAVE_D3D10
-#define HAVE_D3D9
+/* #undef HAVE_DIRECTX */
+/* #undef HAVE_DIRECTX_NV12 */
+/* #undef HAVE_D3D11 */
+/* #undef HAVE_D3D10 */
+/* #undef HAVE_D3D9 */
 
 /* DirectShow Video Capture library */
-#define HAVE_DSHOW
+/* #undef HAVE_DSHOW */
 
 /* Eigen Matrix & Linear Algebra Library */
 /* #undef HAVE_EIGEN */
 
 /* FFMpeg video library */
-#define HAVE_FFMPEG
+/* #undef HAVE_FFMPEG */
 
 /* ffmpeg's libswscale */
-#define HAVE_FFMPEG_SWSCALE
+/* #undef HAVE_FFMPEG_SWSCALE */
 
 /* ffmpeg in Gentoo */
-#define HAVE_GENTOO_FFMPEG
+/* #undef HAVE_GENTOO_FFMPEG */
 
 /* Geospatial Data Abstraction Library */
 /* #undef HAVE_GDAL */
@@ -96,14 +96,14 @@
 /* #undef HAVE_INTELPERC */
 
 /* Intel Integrated Performance Primitives */
-#define HAVE_IPP
-#define HAVE_IPP_ICV_ONLY
+/* #undef HAVE_IPP */
+/* #undef HAVE_IPP_ICV_ONLY */
 
 /* Intel IPP Async */
 /* #undef HAVE_IPP_A */
 
 /* JPEG-2000 codec */
-#define HAVE_JASPER
+/* #undef HAVE_JASPER */
 
 /* IJG JPEG codec */
 #define HAVE_JPEG
@@ -120,13 +120,16 @@
 /* NVidia Video Decoding API*/
 /* #undef HAVE_NVCUVID */
 
+/* NVidia Video Encoding API*/
+/* #undef HAVE_NVCUVENC */
+
 /* OpenCL Support */
-#define HAVE_OPENCL
+/* #undef HAVE_OPENCL */
 /* #undef HAVE_OPENCL_STATIC */
 /* #undef HAVE_OPENCL_SVM */
 
 /* OpenEXR codec */
-#define HAVE_OPENEXR
+/* #undef HAVE_OPENEXR */
 
 /* OpenGL support*/
 /* #undef HAVE_OPENGL */
@@ -162,13 +165,13 @@
 /* #undef HAVE_TBB */
 
 /* TIFF codec */
-#define HAVE_TIFF
+/* #undef HAVE_TIFF */
 
 /* Unicap video capture library */
 /* #undef HAVE_UNICAP */
 
 /* Video for Windows support */
-#define HAVE_VFW
+/* #undef HAVE_VFW */
 
 /* V4L2 capturing support in videoio.h */
 /* #undef HAVE_VIDEOIO */

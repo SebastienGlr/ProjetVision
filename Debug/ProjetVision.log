@@ -1,0 +1,2 @@
+﻿  main.cpp
+LINK : fatal error LNK1104: impossible d'ouvrir le fichier 'opencv_world310d.lib'
