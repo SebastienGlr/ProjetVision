@@ -179,12 +179,6 @@ void callBackTrackBarOpticalFlow(int pos, void*)
 	}
 }
 
-<<<<<<< HEAD
-void callBackTrackBarMovingObject(int pos, void*)
-{
-	
-}
-
 void callBackTrackBarSigns(int , void*)
 {
 	cv::Mat img, templ, result;
@@ -228,8 +222,8 @@ void callBackTrackBarSigns(int , void*)
 
 	cv::imshow("Panneau", img_display);
 	cv::imshow("Result", result);
+}
 
-=======
 static double angle(cv::Point pt1, cv::Point pt2, cv::Point pt0)
 {
 	double dx1 = pt1.x - pt0.x;
@@ -261,7 +255,6 @@ void testMOG()
 	// Convert to grayscale
 	cv::Mat gray;
 	cv::cvtColor(src, gray, CV_BGR2GRAY);
-	cv::fastNlMeansDenoising(gray.clone(), gray);
 	// Use Canny instead of threshold to catch squares with gradient shading
 	cv::Mat bw;
 	cv::Canny(gray, bw, 0, 50, 5);
@@ -328,7 +321,6 @@ void testMOG()
 
 	cv::imshow("src", src);
 	cv::imshow("dst", dst);
->>>>>>> f54da96dfaa5ed06eb743b07c1e6dfdcfd3fddab
 }
 
 int main(void)

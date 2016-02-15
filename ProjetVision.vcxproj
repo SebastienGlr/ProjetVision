@@ -75,7 +75,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_world310d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_photo310d.lib;opencv_flann310d.lib;opencv_features2d310d.lib;opencv_xfeatures2d310d.lib;opencv_imgcodecs310d.lib;opencv_video310d.lib;opencv_calib3d310d.lib;opencv_highgui310d.lib;opencv_core310d.lib;opencv_imgproc310d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>extlib/x64/vc12/lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -88,7 +88,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_world310d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_photo310d.lib;opencv_flann310d.lib;opencv_features2d310d.lib;opencv_xfeatures2d310d.lib;opencv_imgcodecs310d.lib;opencv_video310d.lib;opencv_calib3d310d.lib;opencv_highgui310d.lib;opencv_core310d.lib;opencv_imgproc310d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>extlib/x64/vc12/lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
