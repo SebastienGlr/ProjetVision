@@ -6,6 +6,7 @@
 #include <opencv2/xfeatures2d/nonfree.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/photo/photo.hpp>
+#include <opencv2/opencv.hpp>
 
 
 #include <iostream>
@@ -13,6 +14,7 @@
 
 #define FOLDER_LEFT "img/2011_09_26/2011_09_26_drive_0014_sync/image_02/data/" //Left Camera
 #define FOLDER_RIGHT "img/2011_09_26/2011_09_26_drive_0014_sync/image_03/data/" //Right Camera
+#define FOLDER2_LEFT "img/2011_09_28/2011_09_28_drive_0016_sync/image_03/data/" //Left Camera
 #define NB_FRAME 313
 
 int match_method;
@@ -155,8 +157,6 @@ cv::Mat computeObjectMouvement(int frame)
 //	cv::waitKey(0);
 //}
 
-
-
 void callBackTrackBarDisparity(int pos, void*)
 {
 	cv::Mat left, right, disparity;
@@ -176,6 +176,20 @@ void callBackTrackBarOpticalFlow(int pos, void*)
 		cv::Mat opticalFlow;
 		opticalFlow = computeObjectMouvement(pos);
 		cv::imshow("Optical Flow", opticalFlow);
+	}
+}
+
+void callBackTrackMovingObjects(int pos, void*)
+{
+	if (pos > 0)
+	{
+		cv::Mat img1, img2, fgMaskMOG2;
+		cv::Ptr<cv::BackgroundSubtractor> pMOG2 = cv::createBackgroundSubtractorMOG2();
+		img1 = cv::imread(getImagePath(FOLDER2_LEFT, pos-1), 0);
+		img2 = cv::imread(getImagePath(FOLDER2_LEFT, pos), 0);
+		pMOG2->apply(img1, fgMaskMOG2);
+		pMOG2->apply(img2, fgMaskMOG2);
+		cv::imshow("Moving Objects", fgMaskMOG2);
 	}
 }
 
@@ -222,6 +236,37 @@ void callBackTrackBarSigns(int , void*)
 
 	cv::imshow("Panneau", img_display);
 	cv::imshow("Result", result);
+}
+
+void callBackTrackBarPedestrians(int pos, void*)
+{
+	cv::Mat frame = cv::imread(getImagePath(FOLDER2_LEFT, pos));
+	cv::HOGDescriptor hog;
+	std::vector<cv::Rect> found, found_filtered;
+	
+	hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+	hog.detectMultiScale(frame, found);
+
+	size_t i, j;
+	for (int i = 0; i<found.size(); i++)
+	{
+		cv::Rect r = found[i];
+		for (j = 0; j<found.size(); j++)
+			if (j != i && (r & found[j]) == r)
+				break;
+		if (j == found.size())
+			found_filtered.push_back(r);
+	}
+	for (i = 0; i<found_filtered.size(); i++)
+	{
+		cv::Rect r = found_filtered[i];
+		r.x += cvRound(r.width*0.1);
+		r.width = cvRound(r.width*0.8);
+		r.y += cvRound(r.height*0.06);
+		r.height = cvRound(r.height*0.9);
+		rectangle(frame, r.tl(), r.br(), cv::Scalar(0, 255, 0), 2);
+	}
+	cv::imshow("Pedestrians", frame);
 }
 
 static double angle(cv::Point pt1, cv::Point pt2, cv::Point pt0)
@@ -331,8 +376,11 @@ int main(void)
 	cv::namedWindow("Optical Flow", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
 	cv::createTrackbar("Frame", "Optical Flow", NULL, NB_FRAME, callBackTrackBarOpticalFlow);
 
-	//cv::namedWindow("Moving Object", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
-	//cv::createTrackbar("Frame", "Moving Object", NULL, NB_FRAME, callBackTrackBarMovingObject);
+	cv::namedWindow("Moving Objects", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	cv::createTrackbar("Frame", "Moving Objects", NULL, 185, callBackTrackMovingObjects);
+
+	cv::namedWindow("Pedestrians", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	cv::createTrackbar("Frame", "Pedestrians", NULL, 185, callBackTrackBarPedestrians);
 
 	//int matchMethod;
 	//cv::namedWindow("Panneau", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
@@ -341,7 +389,7 @@ int main(void)
 
 	//searchRoadSigns();
 
-	testMOG();
+	//testMOG();
 	//cv::Mat frame, dframe;
 	//frame = cv::imread(getImagePath(FOLDER_LEFT, 0), 0);
 	//cv::fastNlMeansDenoising(frame, dframe);
