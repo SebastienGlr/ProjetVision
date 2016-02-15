@@ -15,6 +15,9 @@
 #define FOLDER_RIGHT "img/2011_09_26/2011_09_26_drive_0014_sync/image_03/data/" //Right Camera
 #define NB_FRAME 313
 
+int match_method;
+int max_Trackbar = 5;
+
 std::string getImagePath(const char* folder, int ind)
 {
 	std::ostringstream oss;
@@ -162,20 +165,71 @@ void callBackTrackBarDisparity(int pos, void*)
 	right = cv::imread(getImagePath(FOLDER_RIGHT, pos), 0);
 
 	disparity = computeDisparity(left, right);
-	cv::imshow("Window", disparity);
+	cv::imshow("Disparity", disparity);
 	cv::waitKey(1);
 }
 
 void callBackTrackBarOpticalFlow(int pos, void*)
 {
-	cv::Mat opticalFlow;
 	if (pos > 0)
 	{
+		cv::Mat opticalFlow;
 		opticalFlow = computeObjectMouvement(pos);
 		cv::imshow("Optical Flow", opticalFlow);
 	}
 }
 
+<<<<<<< HEAD
+void callBackTrackBarMovingObject(int pos, void*)
+{
+	
+}
+
+void callBackTrackBarSigns(int , void*)
+{
+	cv::Mat img, templ, result;
+
+	img = cv::imread(getImagePath(FOLDER_LEFT, 6), 0);
+	templ = cv::imread("img/cedez.png", 0);
+
+	/// Source image to display
+	cv::Mat img_display;
+	img.copyTo(img_display);
+
+	/// Create the result matrix
+	int result_cols = img.cols - templ.cols + 1;
+	int result_rows = img.rows - templ.rows + 1;
+
+	result.create(result_rows, result_cols, CV_32FC1);
+
+	/// Do the Matching and Normalize
+	cv::matchTemplate(img, templ, result, match_method);
+	cv::normalize(result, result, 0, 1, cv::NORM_MINMAX, -1, cv::Mat());
+
+	/// Localizing the best match with minMaxLoc
+	double minVal, maxVal; 
+	cv::Point minLoc, maxLoc, matchLoc;
+
+	cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
+
+	/// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
+	if (match_method == CV_TM_SQDIFF || match_method == CV_TM_SQDIFF_NORMED)
+	{
+		matchLoc = minLoc;
+	}
+	else
+	{
+		matchLoc = maxLoc;
+	}
+
+	/// Show me what you got
+	cv::rectangle(img_display, matchLoc, cv::Point(matchLoc.x + templ.cols, matchLoc.y + templ.rows), cv::Scalar::all(0), 2, 8, 0);
+	cv::rectangle(result, matchLoc, cv::Point(matchLoc.x + templ.cols, matchLoc.y + templ.rows), cv::Scalar::all(0), 2, 8, 0);
+
+	cv::imshow("Panneau", img_display);
+	cv::imshow("Result", result);
+
+=======
 static double angle(cv::Point pt1, cv::Point pt2, cv::Point pt0)
 {
 	double dx1 = pt1.x - pt0.x;
@@ -274,15 +328,24 @@ void testMOG()
 
 	cv::imshow("src", src);
 	cv::imshow("dst", dst);
+>>>>>>> f54da96dfaa5ed06eb743b07c1e6dfdcfd3fddab
 }
 
 int main(void)
 {
-	cv::namedWindow("Window", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
-	cv::createTrackbar("Frame", "Window", NULL, NB_FRAME, callBackTrackBarDisparity);
+	//cv::namedWindow("Disparity", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	//cv::createTrackbar("Frame", "Disparity", NULL, NB_FRAME, callBackTrackBarDisparity);
 
-	cv::namedWindow("Optical Flow", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
-	cv::createTrackbar("Frame", "Optical Flow", NULL, NB_FRAME, callBackTrackBarOpticalFlow);
+	//cv::namedWindow("Optical Flow", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	//cv::createTrackbar("Frame", "Optical Flow", NULL, NB_FRAME, callBackTrackBarOpticalFlow);
+
+	//cv::namedWindow("Moving Object", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	//cv::createTrackbar("Frame", "Moving Object", NULL, NB_FRAME, callBackTrackBarMovingObject);
+
+	int matchMethod;
+	cv::namedWindow("Panneau", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	cv::namedWindow("Result", cv::WINDOW_AUTOSIZE);
+	cv::createTrackbar("Methode", "Panneau", &match_method, max_Trackbar, callBackTrackBarSigns);
 
 	//searchRoadSigns();
 
