@@ -325,19 +325,19 @@ void testMOG()
 
 int main(void)
 {
-	//cv::namedWindow("Disparity", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
-	//cv::createTrackbar("Frame", "Disparity", NULL, NB_FRAME, callBackTrackBarDisparity);
+	cv::namedWindow("Disparity", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	cv::createTrackbar("Frame", "Disparity", NULL, NB_FRAME, callBackTrackBarDisparity);
 
-	//cv::namedWindow("Optical Flow", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
-	//cv::createTrackbar("Frame", "Optical Flow", NULL, NB_FRAME, callBackTrackBarOpticalFlow);
+	cv::namedWindow("Optical Flow", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	cv::createTrackbar("Frame", "Optical Flow", NULL, NB_FRAME, callBackTrackBarOpticalFlow);
 
 	//cv::namedWindow("Moving Object", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
 	//cv::createTrackbar("Frame", "Moving Object", NULL, NB_FRAME, callBackTrackBarMovingObject);
 
-	int matchMethod;
-	cv::namedWindow("Panneau", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
-	cv::namedWindow("Result", cv::WINDOW_AUTOSIZE);
-	cv::createTrackbar("Methode", "Panneau", &match_method, max_Trackbar, callBackTrackBarSigns);
+	//int matchMethod;
+	//cv::namedWindow("Panneau", cv::WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	//cv::namedWindow("Result", cv::WINDOW_AUTOSIZE);
+	//cv::createTrackbar("Methode", "Panneau", &match_method, max_Trackbar, callBackTrackBarSigns);
 
 	//searchRoadSigns();
 
