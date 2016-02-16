@@ -269,6 +269,35 @@ void callBackTrackBarPedestrians(int pos, void*)
 	cv::imshow("Pedestrians", frame);
 }
 
+void testMOG();
+int threshold1 = 3, threshold2 = 150;
+
+void callBackTrackBarMOG1(int pos, void*) {
+	//cv::Mat left, right, disparity;
+
+	//left = cv::imread(getImagePath(FOLDER_LEFT, pos), 0);
+	//right = cv::imread(getImagePath(FOLDER_RIGHT, pos), 0);
+
+	//disparity = computeDisparity(left, right);
+	//cv::imshow("Disparity", disparity);
+	//cv::waitKey(1);
+	threshold1 = pos;
+	testMOG();
+}
+
+void callBackTrackBarMOG2(int pos, void*) {
+	//cv::Mat left, right, disparity;
+
+	//left = cv::imread(getImagePath(FOLDER_LEFT, pos), 0);
+	//right = cv::imread(getImagePath(FOLDER_RIGHT, pos), 0);
+
+	//disparity = computeDisparity(left, right);
+	//cv::imshow("Disparity", disparity);
+	//cv::waitKey(1);
+	threshold2 = pos;
+	testMOG();
+}
+
 static double angle(cv::Point pt1, cv::Point pt2, cv::Point pt0)
 {
 	double dx1 = pt1.x - pt0.x;
@@ -295,15 +324,17 @@ void setLabel(cv::Mat& im, const std::string label, std::vector<cv::Point>& cont
 
 void testMOG()
 {
-	cv::Mat src = cv::imread(getImagePath(FOLDER_LEFT, 200));
+	cv::Mat src = cv::imread(getImagePath(FOLDER_LEFT, 0));
 
 	// Convert to grayscale
 	cv::Mat gray;
 	cv::cvtColor(src, gray, CV_BGR2GRAY);
 	// Use Canny instead of threshold to catch squares with gradient shading
 	cv::Mat bw;
-	cv::Canny(gray, bw, 0, 50, 5);
+	cv::Canny(gray, bw, threshold1, threshold2, 3, false);
 	cv::imshow("bw", bw);
+	cv::createTrackbar("threshold1", "bw", &threshold1, 1500, callBackTrackBarMOG1);
+	cv::createTrackbar("threshold2", "bw", &threshold2, 1500, callBackTrackBarMOG2);
 	// Find contours
 	std::vector<std::vector<cv::Point> > contours;
 	cv::findContours(bw.clone(), contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
@@ -389,7 +420,7 @@ int main(void)
 
 	//searchRoadSigns();
 
-	//testMOG();
+	testMOG();
 	//cv::Mat frame, dframe;
 	//frame = cv::imread(getImagePath(FOLDER_LEFT, 0), 0);
 	//cv::fastNlMeansDenoising(frame, dframe);
