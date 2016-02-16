@@ -72,13 +72,22 @@ cv::Mat computeObjectMouvement(int frame)
 		termcrit,
 		0,
 		0.001);
+	cv::Point2f average_prev(0, 0);
+	cv::Point2f average_next(0, 0);
 	for (int i = 0; i < features_next.size(); ++i)
 	{
 		if (status[i])
 		{
 			cv::arrowedLine(output, features_prev[i], features_next[i], cv::Scalar(255.0, 0.0, 0.0), 2);
+			average_prev += features_prev[i];
+			average_next += features_next[i];
 		}
 	}
+	average_prev = average_prev / (int)features_next.size();
+	average_next = average_next / (int)features_next.size();
+	cv::Point2f center(output.cols / 2, output.rows / 2);
+	//cv::arrowedLine(output, average_next, average_prev, cv::Scalar(0.0, 255.0, 0.0), 5);
+	cv::arrowedLine(output, center, center + (average_prev - average_next)*3, cv::Scalar(0.0, 255.0, 0.0), 5);
 	return output;
 }
 
