@@ -7,7 +7,7 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/photo/photo.hpp>
 #include <opencv2/opencv.hpp>
-
+#include <opencv2/ml/ml.hpp>
 
 #include <iostream>
 #include <iomanip>
@@ -438,4 +438,121 @@ int main(void)
 	cv::waitKey();
 
 	return 0;
+}
+
+enum sign
+{
+	arret_et_stationnement_interdits, cedez_le_passage, prioritaire, sens_interdit, stop
+};
+
+#include <windows.h>
+#include <tchar.h>
+
+void mainSVM()
+{
+	cv::Mat src = cv::imread(getImagePath(FOLDER_LEFT, 0));
+	cv::namedWindow("Fenêtre LUL", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
+	cv::imshow("Fenêtre LUL", src);
+
+	// Nombre d'images d'entrainement
+	int num_files = 0;
+	// Dimensions des images (va falloir toutes les redimensionner ???)
+	const int img_area = 32 * 32;
+
+	// Entrées (X, Z dans Unity, tous les pixels ici)
+	//float trainingData[num_files][img_area] = {{501, 10},{255, 10},{501, 255},{10, 501}};
+	float** trainingData = (float**) malloc(sizeof(float*) * 200);
+
+	// Sorties attendues (Y dans Unity, le type de panneau ici)
+	//sign labels[num_files] = {sign::arret_et_stationnement_interdits, sign::cedez_le_passage, sign::prioritaire, sign::sens_interdit, sign::stop};
+	int* labels = (int*) malloc(sizeof(int) * 200);
+
+	//int frame = 1;
+	//cv::Mat output = cv::imread(getImagePath(FOLDER_LEFT, frame)); // Output frame for drawing
+	//cv::Mat image_prev = cv::imread(getImagePath(FOLDER_LEFT, frame - 1), 0); // Get previous image
+	//cv::Mat image_next = cv::imread(getImagePath(FOLDER_LEFT, frame), 0);  // Get next image
+
+	const std::string folders[] = {
+		"img\\panneaux\\arret_et_stationnement_interdits",
+		"img\\panneaux\\cedez_le_passage",
+		"img\\panneaux\\prioritaire",
+		"img\\panneaux\\sens_interdit",
+		"img\\panneaux\\stop"};
+
+	WIN32_FIND_DATA FindFileData;
+	HANDLE hFind;
+
+	for(int folderNumber = 0; folderNumber < 5; ++folderNumber)
+	{
+		std::string folder = folders[folderNumber];
+		std::string folderSearch = folder + "\\*";
+		hFind = FindFirstFile(folderSearch.c_str(), &FindFileData);
+		if(hFind == INVALID_HANDLE_VALUE)
+		{
+			std::cout << GetLastError() << std::endl;
+			cv::waitKey();
+			return;
+		}
+		do
+		{
+			std::string filename = FindFileData.cFileName;
+			//std::cout << filename << std::endl;
+			// TODO : (a verifier) que si pas . ou ..
+			if(filename.compare(".") != 0 && filename.compare("..") != 0 && filename.compare("ignored") != 0)
+			{
+				std::cout << folder + "\\" + filename << std::endl;
+
+				trainingData[num_files] = (float*) malloc(sizeof(float) * img_area);
+
+				// Redimension de l'image
+				cv::Size size(32, 32);		//the dst image size
+				cv::Mat src = cv::imread(folder + "\\" + filename);
+				cv::Mat dst;				//dst image
+				cv::resize(src, dst, size);
+
+				// TODO : (a verifier) int ou sign ?
+				labels[num_files] = folderNumber;
+
+				int ii = 0;						// Current column in trainingData
+				for(int i = 0; i < dst.rows; i++)
+				{
+					for(int j = 0; j < dst.cols; j++)
+					{
+						trainingData[num_files][ii] = dst.at<uchar>(i, j);
+						++ii;
+					}
+				}
+
+				num_files++;
+			}
+		} while(FindNextFile(hFind, &FindFileData));
+	}
+
+	cv::Mat trainingDataMat(num_files, img_area, CV_32FC1, trainingData);
+	cv::Mat labelsMat(num_files, 1, CV_32SC1, labels);
+
+	// Création du SVM
+	cv::Ptr<cv::ml::SVM> svm = cv::ml::SVM::create();
+	svm->setType(cv::ml::SVM::C_SVC);
+	svm->setKernel(cv::ml::SVM::LINEAR);
+	svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
+
+	// Entrainement du SVM
+	svm->train(trainingDataMat, cv::ml::ROW_SAMPLE, labelsMat);
+
+	// Sauvegarde/Chargement du SVM
+	//svm->save("trained_svm.txt");
+	//svm->load("trained_svm.txt");
+
+	// Image à tester
+	cv::Mat test(src.rows * src.cols, 1, CV_32SC1, labels);
+	// TODO : init de test à l'image en 1D
+
+	cv::Mat testResult(src.rows * src.cols, 1, CV_32SC1, labels);
+
+	//To test your images using the trained SVM, simply read an image, convert it to a 1D matrix, and pass that in to svm.predict() :
+	//svm->predict(test, testResult);
+	//It will return a value based on what you set as your labels(e.g., -1 or 1, based on my eye / non - eye example above)
+
+	cv::waitKey();
 }
