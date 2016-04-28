@@ -10,6 +10,7 @@
 #include <opencv2/ml/ml.hpp>
 
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 
 #define FOLDER_LEFT "img/2011_09_26/2011_09_26_drive_0014_sync/image_02/data/" //Left Camera
@@ -448,16 +449,26 @@ enum sign
 #include <windows.h>
 #include <tchar.h>
 
-void mainSVM()
+//CV_32FC1 : float 32b
+//CV_32SC1 : signed int 32b
+
+// mat(rows, cols) = mat(sizeY, sizeX)
+
+void main2()
 {
-	cv::Mat src = cv::imread(getImagePath(FOLDER_LEFT, 0));
+	cv::Mat imageToTest2D = cv::imread(getImagePath(FOLDER_LEFT, 0));
+	cv::cvtColor(imageToTest2D, imageToTest2D, CV_BGR2GRAY);
+	imageToTest2D.convertTo(imageToTest2D, CV_32FC1, 1.0 / 255.0);
+
 	cv::namedWindow("Fenêtre LUL", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
-	cv::imshow("Fenêtre LUL", src);
+	cv::imshow("Fenêtre LUL", imageToTest2D);
 
 	// Nombre d'images d'entrainement
 	int num_files = 0;
 	// Dimensions des images (va falloir toutes les redimensionner ???)
-	const int img_area = 32 * 32;
+	const int img_width = 32;
+	const int img_height = 32;
+	const int img_area = img_width * img_height;
 
 	// Entrées (X, Z dans Unity, tous les pixels ici)
 	//float trainingData[num_files][img_area] = {{501, 10},{255, 10},{501, 255},{10, 501}};
@@ -505,20 +516,24 @@ void mainSVM()
 				trainingData[num_files] = (float*) malloc(sizeof(float) * img_area);
 
 				// Redimension de l'image
-				cv::Size size(32, 32);		//the dst image size
-				cv::Mat src = cv::imread(folder + "\\" + filename);
-				cv::Mat dst;				//dst image
-				cv::resize(src, dst, size);
+				cv::Size size(img_height, img_width);		//the dst image size
+				cv::Mat tempImage = cv::imread(folder + "\\" + filename);
+				cv::Mat tempImageResized;				//dst image
+				cv::resize(tempImage, tempImageResized, size);
+
+				cv::cvtColor(tempImageResized, tempImageResized, CV_BGR2GRAY);
+				tempImageResized.convertTo(tempImageResized, CV_32FC1, 1.0 / 255.0);
 
 				// TODO : (a verifier) int ou sign ?
 				labels[num_files] = folderNumber;
 
 				int ii = 0;						// Current column in trainingData
-				for(int i = 0; i < dst.rows; i++)
+				for(int i = 0; i < tempImageResized.rows; i++)
 				{
-					for(int j = 0; j < dst.cols; j++)
+					for(int j = 0; j < tempImageResized.cols; j++)
 					{
-						trainingData[num_files][ii] = dst.at<uchar>(i, j);
+						//std::cout << (float)tempImageResized.at<uchar>(i, j) << std::endl;
+						trainingData[num_files][ii] = tempImageResized.at<float>(i, j);
 						++ii;
 					}
 				}
@@ -531,28 +546,105 @@ void mainSVM()
 	cv::Mat trainingDataMat(num_files, img_area, CV_32FC1, trainingData);
 	cv::Mat labelsMat(num_files, 1, CV_32SC1, labels);
 
-	// Création du SVM
+	// Création du SVM et entrainement
 	cv::Ptr<cv::ml::SVM> svm = cv::ml::SVM::create();
 	svm->setType(cv::ml::SVM::C_SVC);
-	svm->setKernel(cv::ml::SVM::LINEAR);
+	svm->setKernel(cv::ml::SVM::RBF);
 	svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
 
-	// Entrainement du SVM
-	svm->train(trainingDataMat, cv::ml::ROW_SAMPLE, labelsMat);
+	cv::Ptr<cv::ml::TrainData> td = cv::ml::TrainData::create(trainingDataMat, cv::ml::ROW_SAMPLE, labelsMat);
+
+	svm->train(td);
+	//svm->trainAuto(td);
 
 	// Sauvegarde/Chargement du SVM
 	//svm->save("trained_svm.txt");
 	//svm->load("trained_svm.txt");
 
+	//////////////////////////////////////////////////////////////////////////////////////////// V1 qui marche pas 
+	//// Image à tester
+	//cv::Mat imageToTest1D(1, imageToTest2D.rows * imageToTest2D.cols, CV_32FC1);
+	//// TODO : init de test à l'image en 1D
+
+	//std::cout << "2D :: depth : " << imageToTest2D.depth() << " - channels : " << imageToTest2D.channels() << std::endl;
+	//std::cout << "1D :: depth : " << imageToTest1D.depth() << " - channels : " << imageToTest1D.channels() << std::endl;
+
+	//int index1D = 0;						// Current column in trainingData
+	//for(int row = 0; row < imageToTest2D.rows; ++row)
+	//{
+	//	for(int col = 0; col < imageToTest2D.cols; ++col)
+	//	{
+	//		//std::cout << imageToTest1D.at<uchar>(0, index1D) << std::endl;
+	//		//std::cout << imageToTest2D.at<uchar>(row, col) << std::endl;
+	//		//imageToTest1D.at<uchar>(0, index1D) = imageToTest2D.at<uchar>(row, col);
+	//		++index1D;
+	//	}
+	//}
+
+	//cv::Mat testResult(num_files, 1, CV_32SC1);
+
+	////To test your images using the trained SVM, simply read an image, convert it to a 1D matrix, and pass that in to svm.predict() :
+	//svm->predict(imageToTest1D, testResult);
+	////It will return a value based on what you set as your labels(e.g., -1 or 1, based on my eye / non - eye example above)
+
+	//////////////////////////////////////////////////////////////////////////////////////////// V2 qui marche ? 
 	// Image à tester
-	cv::Mat test(src.rows * src.cols, 1, CV_32SC1, labels);
-	// TODO : init de test à l'image en 1D
+	std::ofstream myfile;
+	myfile.open("bordel.txt");
 
-	cv::Mat testResult(src.rows * src.cols, 1, CV_32SC1, labels);
+	const int testZoneSize = 128;
 
-	//To test your images using the trained SVM, simply read an image, convert it to a 1D matrix, and pass that in to svm.predict() :
-	//svm->predict(test, testResult);
-	//It will return a value based on what you set as your labels(e.g., -1 or 1, based on my eye / non - eye example above)
+	//TODO: plutot que de tout parcourir, chercher juste les features
+	//std::vector<std::vector<cv::Point> > contours;
+	//cv::findContours(imageToTest2D, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+	for(int row = 0; row < imageToTest2D.rows - testZoneSize; row += testZoneSize / 2)
+	{
+		for(int col = 0; col < imageToTest2D.cols - testZoneSize; col += testZoneSize / 2)
+		{
+			cv::Mat temp(testZoneSize, testZoneSize, CV_32FC1);
+
+			for(int row2 = 0; row2 < testZoneSize; ++row2)
+			{
+				for(int col2 = 0; col2 < testZoneSize; ++col2)
+				{
+					temp.at<float>(row2, col2) = imageToTest2D.at<float>(row + row2, col + col2);
+				}
+			}
+
+			cv::Size size(img_height, img_width);		//the dst image size
+			cv::resize(temp, temp, size);
+
+			cv::Mat imageToTest1D(1, img_area, CV_32FC1);
+			int index1D = 0;
+
+			for(int row2 = 0; row2 < img_height; ++row2)
+			{
+				for(int col2 = 0; col2 < img_height; ++col2)
+				{
+					//std::cout << imageToTest1D.at<uchar>(0, index1D) << std::endl;
+					//std::cout << imageToTest2D.at<uchar>(row, col) << std::endl;
+					imageToTest1D.at<float>(0, index1D) = temp.at<float>(row2, col2);
+					++index1D;
+				}
+			}
+
+			float result = svm->predict(imageToTest1D);
+			//To test your images using the trained SVM, simply read an image, convert it to a 1D matrix, and pass that in to svm.predict() :
+			//It will return a value based on what you set as your labels(e.g., -1 or 1, based on my eye / non - eye example above)
+			myfile << "row : " << row << " col : " << col << " : "  << result << std::endl;
+
+			if(result != -1) {
+				cv::Mat bite = cv::imread(getImagePath(FOLDER_LEFT, 0));
+
+				cv::rectangle(bite, cv::Point(col, row), cv::Point(col + testZoneSize, row + testZoneSize), CV_RGB(255, 0, 127), 2);
+				cv::putText(bite, std::to_string((int)result), cv::Point((col + col + testZoneSize) / 2, (row + row + testZoneSize) / 2), cv::FONT_HERSHEY_PLAIN, 2, CV_RGB(255, 0, 127), 2);
+				cv::imshow("Panneau", bite);
+
+				cv::waitKey();
+			}
+		}
+	}
+	myfile.close();
 
 	cv::waitKey();
 }
